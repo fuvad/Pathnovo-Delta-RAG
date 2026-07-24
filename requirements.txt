@@ -5,6 +5,10 @@ uvicorn[standard]==0.34.3
 # === PDF Processing ===
 PyMuPDF==1.25.5
 
+# === OCR (Scanned PDF) ===
+pytesseract==0.3.13
+Pillow==11.2.1
+
 # === Vector Database ===
 qdrant-client==1.14.2
 
