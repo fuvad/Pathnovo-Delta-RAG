@@ -1,0 +1,46 @@
+# .gitignore for Document Delta & Grounded Chat
+
+# Virtual environment
+deltaenv/
+venv/
+.venv/
+
+# Environment secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & traces
+logs/
+traces/
+*.log
+
+# Data (generated outputs — keep samples/, ignore generated)
+data/canonical/*
+data/reports/*
+data/outputs/*
+!data/**/.gitkeep
+
+# Logs
+logs/*
+!logs/.gitkeep
+
+# Qdrant local storage
+qdrant_storage/
