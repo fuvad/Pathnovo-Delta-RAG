@@ -45,7 +45,7 @@ class BoundingBox(BaseModel):
 
     Using normalized coordinates makes the representation resolution-
     independent: a box at (0.5, 0.5) is always the center of the page
-    regardless of whether the source was a 72-dpi scan or a 4K render.
+    regardless of whether the sources have different dimensions.
     """
     x0: float = Field(..., ge=0.0, le=1.0, description="Left edge (normalized)")
     y0: float = Field(..., ge=0.0, le=1.0, description="Top edge (normalized)")
@@ -79,13 +79,14 @@ class BoundingBox(BaseModel):
         union_area = self.area + other.area - inter_area
 
         return inter_area / union_area if union_area > 0 else 0.0
+        # 1 -> same, 0 -> no overlap
 
 
 # ---------------------------------------------------------------------------
 # Element — a single extractable item on a page
 # ---------------------------------------------------------------------------
 
-class Element(BaseModel):
+class Element(BaseModel):       # smallest unit in the doc
     """One extractable item from a document page.
 
     This is the atomic unit of the canonical representation. Every piece
@@ -149,7 +150,7 @@ class Page(BaseModel):
 # Document — the top-level canonical representation
 # ---------------------------------------------------------------------------
 
-class Document(BaseModel):
+class Document(BaseModel):      # represents the entire document
     """The complete canonical representation of one document revision.
 
     This is what every ingestion adapter produces. The rest of the pipeline
@@ -175,7 +176,7 @@ class Document(BaseModel):
         default="",
         description="Original filename for traceability",
     )
-    pages: list[Page] = Field(default_factory=list)
+    pages: list[Page] = Field(default_factory=list)  
     metadata: dict[str, Any] = Field(
         default_factory=dict,
         description="Document-level metadata (revision, title, author, etc.)",
