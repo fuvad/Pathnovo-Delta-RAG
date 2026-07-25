@@ -30,12 +30,23 @@ W_SPATIAL = 0.3     # Where the element appears on the page? 30%
 W_TYPE = 0.2        # Whether the element types match? 20%
 
 # Minimum combined score to consider two elements a match
-MATCH_THRESHOLD = 0.4
+MATCH_THRESHOLD = 0.55
 
 
 # ---------------------------------------------------------------------------
 # Match result
 # ---------------------------------------------------------------------------
+
+def _normalize_text(text: str) -> str:
+    """Normalize text for change checking — collapse whitespace/newlines and format colons."""
+    if not text:
+        return ""
+    import re
+    t = " ".join(text.split())
+    t = re.sub(r"\s*:\s*", ": ", t)
+    t = re.sub(r"\s*=\s*", " = ", t)
+    return t.strip().lower()
+
 
 class MatchResult:
     """One match between an element in Doc A and an element in Doc B."""
@@ -70,7 +81,9 @@ class MatchResult:
         if self.element_a is not None and self.element_b is None:
             return "deleted"
         if self.element_a is not None and self.element_b is not None:
-            if self.element_a.text.strip() == self.element_b.text.strip():
+            norm_a = _normalize_text(self.element_a.text)
+            norm_b = _normalize_text(self.element_b.text)
+            if norm_a == norm_b:
                 return "unchanged"
             return "modified"
         return "unknown"

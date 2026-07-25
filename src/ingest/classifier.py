@@ -13,9 +13,16 @@ from src.canonical.model import ElementType
 # Compiled regex patterns — order matters (first match wins)
 # ---------------------------------------------------------------------------
 
-# Equipment tags: 26-KA-902, P-101A, V-200, TK-3001, HX-100
+# Equipment tags: 26-KA-902, P-101A, V-200, TK-3001, HX-100, 26-CX-9021
+# Also matches multi-line blocks where first line is tag + second is service
 _EQUIPMENT_RE = re.compile(
-    r"^[\d]{0,3}[-]?[A-Z]{1,4}[-][A-Z]{0,3}[-]?\d{2,5}[A-Z]?$",
+    r"^\d{0,3}[-]?[A-Z]{1,4}[-][A-Z]{0,3}[-]?\d{2,5}[A-Z]?$",
+    re.IGNORECASE,
+)
+
+# Multi-line equipment: "26-KA-902\n3RD STAGE HP GAS EXPORT COMPRESSOR"
+_EQUIPMENT_MULTILINE_RE = re.compile(
+    r"^\d{0,3}[-]?[A-Z]{1,4}[-][A-Z]{0,3}[-]?\d{2,5}[A-Z]?\s*\n",
     re.IGNORECASE,
 )
 
@@ -75,11 +82,33 @@ def classify_text(text: str, font_size: float = 0.0, page_avg_font: float = 0.0)
     if not stripped:
         return ElementType.UNKNOWN
 
+    # For multi-line blocks, also check just the first line
+    first_line = stripped.split("\n")[0].strip()
+
     # --- Order matters: more specific patterns first ---
 
     # Notes (check early — "NOTE 19" could false-match instrument)
     if _NOTE_RE.search(stripped):
         return ElementType.NOTE
+
+    # Equipment tags — check BEFORE pipe to avoid misclassification
+    # "26-KA-902" matches both equipment and pipe patterns
+    if _EQUIPMENT_RE.match(first_line):
+        return ElementType.EQUIPMENT
+
+    # Multi-line equipment: "26-KA-902\n3RD STAGE HP GAS EXPORT COMPRESSOR"
+    if _EQUIPMENT_MULTILINE_RE.match(stripped):
+        return ElementType.EQUIPMENT
+
+    # Instrument tags — also check multi-line: "PSV\n9027A" or "PIT\n9023"
+    if _INSTRUMENT_RE.match(first_line):
+        return ElementType.INSTRUMENT
+
+    # Multi-line instrument: "PSV\n9027A\n26" or "PIT\n9023\n26"
+    if len(first_line) <= 4 and re.match(r"^[A-Z]{2,4}$", first_line):
+        lines = [l.strip() for l in stripped.split("\n") if l.strip()]
+        if len(lines) >= 2 and re.match(r"^\d{3,5}[A-Z]?$", lines[1]):
+            return ElementType.INSTRUMENT
 
     # Pipe specs
     if _PIPE_RE.match(stripped):
@@ -88,14 +117,6 @@ def classify_text(text: str, font_size: float = 0.0, page_avg_font: float = 0.0)
     # Valve tags
     if _VALVE_RE.match(stripped):
         return ElementType.VALVE
-
-    # Equipment tags (before instruments — equipment patterns are more specific)
-    if _EQUIPMENT_RE.match(stripped):
-        return ElementType.EQUIPMENT
-
-    # Instrument tags
-    if _INSTRUMENT_RE.match(stripped):
-        return ElementType.INSTRUMENT
 
     # Table values (numbers with units)
     if _TABLE_VALUE_RE.match(stripped):

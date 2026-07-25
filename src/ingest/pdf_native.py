@@ -5,6 +5,7 @@ Handles born-digital PDFs with an extractable text/vector layer.
 Blocks are extracted, then classified via regex into canonical ElementTypes.
 """
 
+import re
 from pathlib import Path
 import fitz  # PyMuPDF
 from src.canonical.model import (
@@ -18,6 +19,66 @@ from src.ingest.classifier import classify_text
 from src.config.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Noise filter — skips elements that add no semantic value
+# ---------------------------------------------------------------------------
+
+# Grid/border labels: single letters A-J or single numbers 1-12
+_GRID_LABEL_RE = re.compile(r"^[A-J]$|^\d{1,2}$", re.IGNORECASE)
+
+# Standalone punctuation or symbols
+_PUNCTUATION_RE = re.compile(r"^[/*.,\-\\_|#&()\"\']+$")
+
+# Bare pressure class (just "300#", "150#", "2500#" with nothing else)
+_BARE_CLASS_RE = re.compile(r"^\d+#$")
+
+# Nozzle IDs (N3207, N4601, O3207, O4207) — useful for piping but noise for delta
+_NOZZLE_RE = re.compile(r"^[NO]\d{4}$", re.IGNORECASE)
+
+# CAD drawing graphic handles / internal object IDs (26GT9135, 26CB9811, 43GT9052, 26BL9031)
+_CAD_HANDLE_RE = re.compile(r"^\d{2}[A-Z]{2}\d{4}[A-Z]?$", re.IGNORECASE)
+
+
+def _is_noise(text: str) -> bool:
+    """Return True if the text block is noise that should be skipped.
+
+    Noise elements create hundreds of false positive matches because
+    both documents contain similar short codes that match each other
+    without representing meaningful changes.
+    """
+    stripped = text.strip()
+
+    # Too short — single chars, "26", "RS", "*"
+    if len(stripped) <= 2:
+        return True
+
+    # Check each line — if multi-line, only noise if ALL lines are noise
+    lines = [l.strip() for l in stripped.split("\n") if l.strip()]
+
+    # Single line checks
+    if len(lines) == 1:
+        line = lines[0]
+        if _GRID_LABEL_RE.match(line):
+            return True
+        if _PUNCTUATION_RE.match(line):
+            return True
+        if _BARE_CLASS_RE.match(line):
+            return True
+        if _NOZZLE_RE.match(line):
+            return True
+        if _CAD_HANDLE_RE.match(line):
+            return True
+
+    # Multi-line: noise if it's ONLY nozzle IDs, grid labels, or CAD handles
+    if len(lines) > 1 and all(
+        _NOZZLE_RE.match(l) or _GRID_LABEL_RE.match(l) or _CAD_HANDLE_RE.match(l) or len(l) <= 2
+        for l in lines
+    ):
+        return True
+
+    return False
 
 
 class NativePDFAdapter(FormatAdapter):
@@ -107,6 +168,10 @@ class NativePDFAdapter(FormatAdapter):
                 block_text = "\n".join(block_text_parts).strip()    # Join all lines
 
                 if not block_text:
+                    continue
+
+                # --- Noise filter: skip elements that add no semantic value ---
+                if _is_noise(block_text):
                     continue
 
                 # Block bounding box from PyMuPDF (x0, y0, x1, y1)

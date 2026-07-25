@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-07-25T15:25:36.995221+00:00",
+  "request_id": "78110077e7514a25",
+  "results": [
+    {
+      "pair_id": "pair_01_real",
+      "name": "Export Gas vs Lift Gas Compressor P&ID",
+      "elements_a": 259,
+      "elements_b": 329,
+      "predicted_changes": 284,
+      "delta_scores": {
+        "modifications": {
+          "true_positives": 23,
+          "false_positives": 129,
+          "false_negatives": 3,
+          "precision": 0.1513,
+          "recall": 0.8846,
+          "f1": 0.2584
+        },
+        "additions": {
+          "true_positives": 7,
+          "false_positives": 94,
+          "false_negatives": 3,
+          "precision": 0.0693,
+          "recall": 0.7,
+          "f1": 0.1261
+        },
+        "removals": {
+          "true_positives": 0,
+          "false_positives": 31,
+          "false_negatives": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "overall": {
+          "true_positives": 30,
+          "false_positives": 254,
+          "false_negatives": 9,
+          "precision": 0.1056,
+          "recall": 0.7692,
+          "f1": 0.1858
+        }
+      },
+      "chat_scores": {}
+    }
+  ]
+}
