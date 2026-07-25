@@ -104,7 +104,7 @@ async def health_check():
 @app.post("/api/v1/ingest", response_model=IngestResponse, tags=["Ingestion"], include_in_schema=False)
 async def ingest_document(
     file: UploadFile = File(..., description="PDF or document file to upload"),
-    pid: Optional[str] = Form(None, description="Unique persistent identifier (defaults to filename if omitted)"),
+    pid: Optional[str] = Form(None, examples=["export_gas_902"], description="Unique persistent identifier (e.g. export_gas_902). If left blank or 'string', derived automatically from filename."),
     adapter_type: str = Form("native", description="Adapter type: 'native' or 'scanned'"),
 ):
     """Upload a PDF file and extract its canonical document representation.
@@ -118,8 +118,13 @@ async def ingest_document(
     trace = RequestTrace()
     bind_request_id(trace.request_id)
 
-    # Derive PID from filename if not provided
-    clean_pid = pid.strip() if pid and pid.strip() else Path(file.filename).stem.replace(" ", "_").replace("&", "and")
+    # Derive PID from filename if not provided or left as Swagger default 'string'
+    clean_pid = None
+    if pid and pid.strip() and pid.strip().lower() != "string":
+        clean_pid = pid.strip()
+
+    if not clean_pid:
+        clean_pid = Path(file.filename).stem.replace(" ", "_").replace("&", "and")
 
     # Save uploaded file to temp samples directory
     samples_dir = settings.SAMPLES_DIR
