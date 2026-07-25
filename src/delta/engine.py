@@ -104,7 +104,7 @@ class DeltaEngine:
         # Log summary
         counts = {}
         for d in deltas:
-            counts[d.change] = counts.get(d.change, 0) + 1
+            counts[d.change] = counts.get(d.change, 0) + 1      # How many changes occurred
 
         logger.info(
             "delta_computed",
@@ -146,6 +146,8 @@ class DeltaEngine:
     def _make_added(self, match: MatchResult) -> DeltaEntry:
         """Element exists in Doc B but not Doc A → added."""
         eb = match.element_b
+        # Confidence = extraction confidence (how sure we are this element exists)
+        # For added elements, there's no alignment score — we trust the extractor
         return DeltaEntry(
             change="added",
             page=eb.page_number,
@@ -153,13 +155,15 @@ class DeltaEngine:
             old_text="",
             new_text=eb.text,
             bbox=self._get_bbox(eb),
-            confidence=eb.confidence,
+            confidence=eb.confidence,  # extraction confidence
             reason=f"New {eb.type.value.lower()} added: \"{eb.text[:80]}\"",
         )
 
     def _make_removed(self, match: MatchResult) -> DeltaEntry:
         """Element exists in Doc A but not Doc B → removed."""
         ea = match.element_a
+        # Confidence = extraction confidence (how sure we are this element existed)
+        # For removed elements, there's no alignment score — we trust the extractor
         return DeltaEntry(
             change="removed",
             page=ea.page_number,
@@ -167,7 +171,7 @@ class DeltaEngine:
             old_text=ea.text,
             new_text="",
             bbox=self._get_bbox(ea),
-            confidence=ea.confidence,
+            confidence=ea.confidence,  # extraction confidence
             reason=f"{ea.type.value.lower().capitalize()} removed: \"{ea.text[:80]}\"",
         )
 
@@ -176,7 +180,8 @@ class DeltaEngine:
         ea = match.element_a
         eb = match.element_b
 
-        # Confidence from the alignment match score
+        # Confidence = alignment score (how sure we are these two elements correspond)
+        # This is different from extraction confidence — it measures match quality
         confidence = match.combined_score
 
         # Generate a human-readable reason
@@ -192,21 +197,25 @@ class DeltaEngine:
             old_text=ea.text,
             new_text=eb.text,
             bbox=bbox,
-            confidence=round(confidence, 4),
+            confidence=round(confidence, 4),  # alignment confidence
             reason=reason,
         )
 
     def _make_unchanged(self, match: MatchResult) -> DeltaEntry:
         """Element is the same in both → unchanged."""
         ea = match.element_a
+        eb = match.element_b
+        # Use eb.text for new_text — even though they're equal now,
+        # this preserves the true Doc B text (avoids silent data loss
+        # if the alignment's "unchanged" criteria ever relaxes)
         return DeltaEntry(
             change="unchanged",
             page=ea.page_number,
             element_type=ea.type.value.lower(),
             old_text=ea.text,
-            new_text=ea.text,
+            new_text=eb.text,  # from Doc B, not ea.text
             bbox=self._get_bbox(ea),
-            confidence=match.combined_score,
+            confidence=match.combined_score,  # alignment confidence
             reason="No change detected",
         )
 
@@ -219,11 +228,11 @@ class DeltaEngine:
         """Generate a human-readable reason for a modification.
 
         Uses deterministic logic, not LLM — keeps the delta engine
-        reproducible and fast.
+        reproducible and fast. Includes word-level diff for long texts.
         """
         type_name = eb.type.value.lower()
 
-        # Type changed
+        # Type changed (return immediately coz that's the headline story)
         if ea.type != eb.type:
             return (
                 f"Element reclassified from {ea.type.value.lower()} "
@@ -238,13 +247,31 @@ class DeltaEngine:
         if len(old) < 50 and len(new) < 50:
             return f"{type_name.capitalize()} changed from \"{old}\" to \"{new}\""
 
-        # Longer texts — note the change
+        # Longer texts — do a real word-level diff
         if len(new) > len(old) * 1.5:
             return f"{type_name.capitalize()} expanded (text added)"
         elif len(old) > len(new) * 1.5:
             return f"{type_name.capitalize()} shortened (text removed)"
         else:
-            return f"{type_name.capitalize()} text modified"
+            # Word-level diff: find what words were added/removed
+            old_words = set(old.split())
+            new_words = set(new.split())
+            added_words = new_words - old_words
+            removed_words = old_words - new_words
+
+            parts = []
+            if removed_words:
+                removed_sample = ", ".join(list(removed_words)[:5])
+                parts.append(f"removed: [{removed_sample}]")
+            if added_words:
+                added_sample = ", ".join(list(added_words)[:5])
+                parts.append(f"added: [{added_sample}]")
+
+            if parts:
+                diff_detail = "; ".join(parts)
+                return f"{type_name.capitalize()} text modified — {diff_detail}"
+
+            return f"{type_name.capitalize()} text modified (word order or formatting changed)"
 
     # -------------------------------------------------------------------
     # Helpers
