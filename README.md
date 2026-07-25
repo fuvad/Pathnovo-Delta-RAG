@@ -90,23 +90,32 @@ QDRANT_HOST=localhost
 QDRANT_PORT=6333
 ```
 
-### 3. Running Unit Tests
+### 3. Start Qdrant Vector Database
+
+The grounded vector retrieval layer requires Qdrant running locally (via Docker or standalone binary):
+
+```bash
+# Start Qdrant in Docker
+docker run -d -p 6333:6333 qdrant/qdrant
+```
+
+### 4. Running Unit Tests
 
 ```bash
 python -m pytest tests/
 ```
 
-### 4. Running Evaluation Harness
+### 5. Running Evaluation Harness
 
 ```bash
 # Run Delta evaluation (no vector DB required)
 python eval/run_eval.py --skip-chat
 
-# Run Full Evaluation (Delta + Grounded Chat)
+# Run Full Evaluation (Delta + Grounded Chat — requires Qdrant running)
 python eval/run_eval.py
 ```
 
-### 5. Running Web API & Swagger UI
+### 6. Running Web API & Swagger UI
 
 Start the FastAPI application:
 
