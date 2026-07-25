@@ -106,12 +106,60 @@ python eval/run_eval.py --skip-chat
 python eval/run_eval.py
 ```
 
-### 5. Running Web API & Application
+### 5. Running Web API & Swagger UI
+
+Start the FastAPI application:
 
 ```bash
-# Start FastAPI application
 uvicorn src.api.main:app --reload --port 8000
 ```
+
+Open your browser to **[http://localhost:8000/docs](http://localhost:8000/docs)** to access the interactive Swagger UI.
+
+#### 🌐 Interactive Swagger UI Workflow
+
+```
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│  POST /ingest   │ ───►  │   POST /delta   │ ───►  │   POST /chat    │
+│  (Upload PDFs)  │       │ (Compute Diff)  │       │ (Ask Questions) │
+└─────────────────┘       └─────────────────┘       └─────────────────┘
+```
+
+1. **Ingest Base Document (Revision A)**:
+   - Expand `POST /ingest` $\rightarrow$ Click **Try it out**.
+   - `file`: Choose base PDF (`Export Gas Compressor-P&ID.pdf`).
+   - `pid`: Enter `export_gas_902` (or leave blank to automatically derive from filename).
+   - `adapter_type`: `native` (or `scanned` for OCR).
+   - Click **Execute**.
+
+2. **Ingest Revised Document (Revision B)**:
+   - Expand `POST /ingest` $\rightarrow$ Click **Try it out**.
+   - `file`: Choose revised PDF (`Lift Gas compressor-P&ID.pdf`).
+   - `pid`: Enter `lift_gas_901` (or leave blank to derive from filename).
+   - Click **Execute**.
+
+3. **Compute Structured Delta**:
+   - Expand `POST /delta` $\rightarrow$ Click **Try it out**.
+   - Provide PIDs in JSON Request Body:
+     ```json
+     {
+       "pid_a": "export_gas_902",
+       "pid_b": "lift_gas_901"
+     }
+     ```
+   - Click **Execute**. (Computes delta, saves reports to `data/reports/`, and indexes elements into Qdrant).
+
+4. **Grounded RAG Chat**:
+   - Expand `POST /chat` $\rightarrow$ Click **Try it out**.
+   - JSON Request Body:
+     ```json
+     {
+       "pid_a": "export_gas_902",
+       "pid_b": "lift_gas_901",
+       "question": "What changed in the equipment tag and compressor service?"
+     }
+     ```
+   - Click **Execute**. Returns a grounded answer strictly citing sources (`[PID: ..., Page: ..., Type: ...]`).
 
 ---
 
