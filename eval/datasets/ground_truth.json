@@ -1,0 +1,389 @@
+{
+    "description": "Evaluation dataset for Pathnovo Delta RAG pipeline",
+    "pairs": [
+        {
+            "pair_id": "pair_01_real",
+            "name": "Export Gas vs Lift Gas Compressor P&ID",
+            "description": "Real industrial P&ID pair — Export Gas Compressor (old) vs Lift Gas Compressor (new). Different compressor services with significant tag, parameter, and note changes.",
+            "pdf_a": "data/samples/Export Gas Compressor-P&ID.pdf",
+            "pdf_b": "data/samples/Lift Gas compressor-P&ID.pdf",
+            "pid_a": "export_gas_902",
+            "pid_b": "lift_gas_901",
+            "ground_truth": {
+                "expected_modifications": [
+                    {
+                        "type": "equipment",
+                        "old": "26-KA-902",
+                        "new": "26-KA-901",
+                        "page": 1,
+                        "reason": "Equipment tag changed from 902 to 901"
+                    },
+                    {
+                        "type": "text",
+                        "old": "3RD STAGE HP GAS EXPORT COMPRESSOR",
+                        "new": "3RD STAGE HP GAS LIFT COMPRESSOR",
+                        "page": 1,
+                        "reason": "Service changed from Export to Lift"
+                    },
+                    {
+                        "type": "table",
+                        "old": "1835",
+                        "new": "776",
+                        "page": 1,
+                        "reason": "Duty (kW) changed from 1835 to 776"
+                    },
+                    {
+                        "type": "table",
+                        "old": "62809",
+                        "new": "19057",
+                        "page": 1,
+                        "reason": "Flow rate (kg/h) changed from 62809 to 19057"
+                    },
+                    {
+                        "type": "table",
+                        "old": "199   /   108.5",
+                        "new": "229 / 108.5",
+                        "page": 1,
+                        "reason": "Discharge operating pressure changed from 199 to 229 barg"
+                    },
+                    {
+                        "type": "table",
+                        "old": "77 - 109   /   50",
+                        "new": "122 - 135 / 50",
+                        "page": 1,
+                        "reason": "Discharge operating temp changed from 77-109 to 122-135 C"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "PIT 9023",
+                        "new": "PIT 9062",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "PIT 9019",
+                        "new": "PIT 9058",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "TIT 9025",
+                        "new": "TIT 9064",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "TIT 9024",
+                        "new": "TIT 9063",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "TIT 9018",
+                        "new": "TIT 9057",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "PDIT 9015",
+                        "new": "PDIT 9054",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "PDIT 9017",
+                        "new": "PDIT 9056",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "PIT 9016",
+                        "new": "PIT 9055",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "instrument",
+                        "old": "PIT 9026",
+                        "new": "PIT 9065",
+                        "page": 1,
+                        "reason": "Instrument tag changed"
+                    },
+                    {
+                        "type": "note",
+                        "old": "HH : 214",
+                        "new": "HH: 245",
+                        "page": 1,
+                        "reason": "High-high setpoint changed from 214 to 245"
+                    },
+                    {
+                        "type": "note",
+                        "old": "HH : 150",
+                        "new": "HH : 160",
+                        "page": 1,
+                        "reason": "High-high temp setpoint changed from 150 to 160"
+                    },
+                    {
+                        "type": "note",
+                        "old": "H : 0.7\nHH : 1.2",
+                        "new": "H    : 0.3\nHH : 0.6",
+                        "page": 1,
+                        "reason": "PDIT alarm setpoints changed: H 0.7→0.3, HH 1.2→0.6"
+                    },
+                    {
+                        "type": "note",
+                        "old": "HH : 135",
+                        "new": "HH :140",
+                        "page": 1,
+                        "reason": "Suction pressure HH changed from 135 to 140"
+                    },
+                    {
+                        "type": "pipe",
+                        "old": "FC11S",
+                        "new": "GC11S",
+                        "page": 1,
+                        "reason": "Pipe spec changed from FC11S to GC11S"
+                    },
+                    {
+                        "type": "note",
+                        "old": "26-PDI-9015 HH INITIATE PRESSURIZED COMPRESSOR STOP",
+                        "new": "26-PDI-9054 HH INITIATE PRESSURIZED COMPRESSOR STOP",
+                        "page": 1,
+                        "reason": "Note 1 reference instrument tag changed"
+                    },
+                    {
+                        "type": "note",
+                        "old": "ASC/PIC3-GE",
+                        "new": "ASC/PIC3-GL",
+                        "page": 1,
+                        "reason": "Anti-surge control reference changed from GE to GL"
+                    },
+                    {
+                        "type": "text",
+                        "old": "PSV 9027A",
+                        "new": "PSV 9066A",
+                        "page": 1,
+                        "reason": "PSV tag changed"
+                    },
+                    {
+                        "type": "text",
+                        "old": "PSV 9027B",
+                        "new": "PSV 9066B",
+                        "page": 1,
+                        "reason": "PSV tag changed"
+                    },
+                    {
+                        "type": "note",
+                        "old": "COMPRESSOR SUCTION PRESSURE IS CONTROLLED BY USING VSD; DISCHARGE PRESSURE AS OVERRIDE CONTROL",
+                        "new": "COMPRESSOR DISCHARGE PRESSURE IS CONTROLLED WITH VSD",
+                        "page": 1,
+                        "reason": "Control strategy changed"
+                    },
+                    {
+                        "type": "note",
+                        "old": "PRIMARY SEAL GAS IS TAKEN DOWNSTREAM LAST COMPRESSING STAGE (4TH STAGE)",
+                        "new": "PRIMARY SEAL GAS IS TAKEN DOWNSTREAM LAST COMPRESSING STAGE (8TH STAGE)",
+                        "page": 1,
+                        "reason": "Seal gas stage reference changed from 4th to 8th"
+                    }
+                ],
+                "expected_additions": [
+                    {
+                        "type": "instrument",
+                        "text": "26-HA-911",
+                        "page": 1,
+                        "reason": "Balance line cooler added"
+                    },
+                    {
+                        "type": "instrument",
+                        "text": "PDIT 9757",
+                        "page": 1,
+                        "reason": "New differential pressure transmitter for balance line"
+                    },
+                    {
+                        "type": "instrument",
+                        "text": "PIT 9759",
+                        "page": 1,
+                        "reason": "New pressure indicator for balance line"
+                    },
+                    {
+                        "type": "instrument",
+                        "text": "PIT 9215",
+                        "page": 1,
+                        "reason": "New pressure indicator added"
+                    },
+                    {
+                        "type": "instrument",
+                        "text": "TIT 9211",
+                        "page": 1,
+                        "reason": "New temperature indicator for balance line"
+                    },
+                    {
+                        "type": "instrument",
+                        "text": "PSE 9216",
+                        "page": 1,
+                        "reason": "New pressure safety element"
+                    },
+                    {
+                        "type": "instrument",
+                        "text": "PSE 9758",
+                        "page": 1,
+                        "reason": "New pressure safety element for balance line"
+                    },
+                    {
+                        "type": "note",
+                        "text": "BALANCE LINE",
+                        "page": 1,
+                        "reason": "Balance line system added"
+                    },
+                    {
+                        "type": "note",
+                        "text": "CHEMICAL CLEANING (CIP); BLEED/DRAIN CONNECTION",
+                        "page": 1,
+                        "reason": "Note 33 added"
+                    },
+                    {
+                        "type": "note",
+                        "text": "THIS P&ID CONTAINS DCN-KP-0839-2/0970-1/1261-1",
+                        "page": 1,
+                        "reason": "Updated DCN reference"
+                    }
+                ],
+                "expected_removals": [
+                    {
+                        "type": "note",
+                        "text": "THIS P&ID CONTAINS DCN-KP-0839-1/0892-2/1260-1",
+                        "page": 1,
+                        "reason": "Old DCN reference removed"
+                    },
+                    {
+                        "type": "note",
+                        "text": "PROVISION FOR FUTURE HOT GAS BYPASS LINE",
+                        "page": 1,
+                        "reason": "Old note 34 removed or renumbered"
+                    },
+                    {
+                        "type": "instrument",
+                        "text": "FE 9017",
+                        "page": 1,
+                        "reason": "Old flow element tag removed (replaced by 9056)"
+                    }
+                ]
+            },
+            "questions": [
+                {
+                    "id": "q01",
+                    "question": "What changed in the equipment tag?",
+                    "expected_answer": "The equipment tag changed from 26-KA-902 to 26-KA-901.",
+                    "expected_citations": ["equipment", "26-KA-902", "26-KA-901"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q02",
+                    "question": "What is the compressor duty?",
+                    "expected_answer": "The compressor duty is 776 kW (changed from 1835 kW).",
+                    "expected_citations": ["776", "1835", "kW"],
+                    "category": "factual"
+                },
+                {
+                    "id": "q03",
+                    "question": "Which instruments changed?",
+                    "expected_answer": "Multiple instruments changed: PIT 9023→9062, PIT 9019→9058, TIT 9025→9064, TIT 9024→9063, TIT 9018→9057, PDIT 9015→9054, PDIT 9017→9056, PIT 9016→9055, PIT 9026→9065.",
+                    "expected_citations": ["PIT", "TIT", "PDIT"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q04",
+                    "question": "What is the discharge operating pressure?",
+                    "expected_answer": "The discharge operating pressure is 229 barg (changed from 199 barg).",
+                    "expected_citations": ["229", "199", "barg"],
+                    "category": "factual"
+                },
+                {
+                    "id": "q05",
+                    "question": "What changed in the compressor service description?",
+                    "expected_answer": "The service changed from 3RD STAGE HP GAS EXPORT COMPRESSOR to 3RD STAGE HP GAS LIFT COMPRESSOR.",
+                    "expected_citations": ["EXPORT", "LIFT"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q06",
+                    "question": "Which notes were modified?",
+                    "expected_answer": "Note 1 changed instrument reference from 26-PDI-9015 to 26-PDI-9054. Note 16 changed seal gas stage from 4th to 8th. Note 18 changed control strategy. Multiple alarm setpoints were modified.",
+                    "expected_citations": ["note", "PDI", "seal gas"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q07",
+                    "question": "What is the flow rate?",
+                    "expected_answer": "The flow rate is 19057 kg/h (changed from 62809 kg/h).",
+                    "expected_citations": ["19057", "62809", "kg/h"],
+                    "category": "factual"
+                },
+                {
+                    "id": "q08",
+                    "question": "Which valves changed?",
+                    "expected_answer": "PSV 9027A changed to PSV 9066A, and PSV 9027B changed to PSV 9066B.",
+                    "expected_citations": ["PSV", "9027", "9066"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q09",
+                    "question": "What was added to the new revision?",
+                    "expected_answer": "New items include: Balance line cooler 26-HA-911, PDIT 9757, PIT 9759, PIT 9215, TIT 9211, PSE 9216, PSE 9758, and Note 33 for chemical cleaning.",
+                    "expected_citations": ["26-HA-911", "balance line", "PDIT 9757"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q10",
+                    "question": "What is the anti-surge control reference?",
+                    "expected_answer": "The anti-surge control reference changed from ASC/PIC3-GE to ASC/PIC3-GL.",
+                    "expected_citations": ["ASC", "PIC3", "GL"],
+                    "category": "factual"
+                },
+                {
+                    "id": "q11",
+                    "question": "What changed in the alarm setpoints?",
+                    "expected_answer": "PDIT alarm H changed from 0.7 to 0.3, HH from 1.2 to 0.6. Discharge temp HH changed from 150 to 160. Suction PIT HH changed from 214 to 245. Suction pressure HH changed from 135 to 140.",
+                    "expected_citations": ["HH", "setpoint"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q12",
+                    "question": "Who is the compressor vendor?",
+                    "expected_answer": "The compressor vendor is MAN ENERGY SOLUTIONS.",
+                    "expected_citations": ["MAN ENERGY SOLUTIONS"],
+                    "category": "factual"
+                },
+                {
+                    "id": "q13",
+                    "question": "What changed in the seal gas system?",
+                    "expected_answer": "The primary seal gas is now taken downstream of the 8th compressing stage instead of the 4th stage.",
+                    "expected_citations": ["seal gas", "8TH", "4TH"],
+                    "category": "delta"
+                },
+                {
+                    "id": "q14",
+                    "question": "What is the compressor type?",
+                    "expected_answer": "The compressor type is VARIABLE SPEED MOTOR DRIVEN CENTRIFUGAL.",
+                    "expected_citations": ["VARIABLE SPEED", "CENTRIFUGAL"],
+                    "category": "factual"
+                },
+                {
+                    "id": "q15",
+                    "question": "What is the design pressure downstream of the compressor?",
+                    "expected_answer": "The design pressure in the external system downstream of the compressor changed from 225 BAR G to 257 BARG.",
+                    "expected_citations": ["225", "257", "downstream"],
+                    "category": "delta"
+                }
+            ]
+        }
+    ]
+}
