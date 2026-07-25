@@ -41,12 +41,12 @@ class DeltaReport:
         self.changes = [d for d in deltas if d.change != "unchanged"]
         self.unchanged = [d for d in deltas if d.change == "unchanged"]
 
-        # Count by change type
+        # Count by change type (counts how many of each change type exist)
         self.counts: dict[str, int] = {}
         for d in deltas:
             self.counts[d.change] = self.counts.get(d.change, 0) + 1
 
-        # Group changes by page
+        # Group changes by page (groups changes by which page they appear on)
         self.by_page: dict[int, list[DeltaEntry]] = defaultdict(list)
         for d in self.changes:
             self.by_page[d.page].append(d)

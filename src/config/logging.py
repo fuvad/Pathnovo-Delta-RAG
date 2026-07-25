@@ -3,6 +3,11 @@ Structured logging configuration using structlog.
 
 Produces JSON logs with correlation/request IDs for observability.
 All modules should use `get_logger(__name__)` to get a bound logger.
+
+Request ID binding:
+    Call `bind_request_id(request_id)` at the start of a pipeline run.
+    Every subsequent log line from any module will carry that request_id
+    automatically via structlog's contextvars integration.
 """
 
 import logging
@@ -17,7 +22,7 @@ def setup_logging() -> None:
 
     # Shared processors applied to every log entry
     shared_processors: list[structlog.types.Processor] = [
-        structlog.contextvars.merge_contextvars,
+        structlog.contextvars.merge_contextvars,     # picks up bound request_id
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso"),
@@ -60,3 +65,18 @@ def setup_logging() -> None:
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """Get a structured logger bound with the module name."""
     return structlog.get_logger(name)
+
+
+def bind_request_id(request_id: str) -> None:
+    """Bind a request_id to all subsequent log lines in this context.
+
+    Call this at the start of a pipeline run. Every log line from every
+    module will automatically include this request_id until cleared.
+    """
+    structlog.contextvars.clear_contextvars()
+    structlog.contextvars.bind_contextvars(request_id=request_id)
+
+
+def clear_request_context() -> None:
+    """Clear the bound request context (call at end of request)."""
+    structlog.contextvars.clear_contextvars()
