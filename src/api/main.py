@@ -100,22 +100,31 @@ async def health_check():
 
 
 @app.post("/ingest", response_model=IngestResponse, tags=["Ingestion"])
+@app.post("/api/ingest", response_model=IngestResponse, tags=["Ingestion"], include_in_schema=False)
+@app.post("/api/v1/ingest", response_model=IngestResponse, tags=["Ingestion"], include_in_schema=False)
 async def ingest_document(
-    pid: str = Form(..., description="Unique persistent identifier for this document revision"),
     file: UploadFile = File(..., description="PDF or document file to upload"),
+    pid: Optional[str] = Form(None, description="Unique persistent identifier (defaults to filename if omitted)"),
     adapter_type: str = Form("native", description="Adapter type: 'native' or 'scanned'"),
 ):
-    """Upload a PDF file and ingest it into the Canonical Document representation.
+    """Upload a PDF file and extract its canonical document representation.
+
+    Note: Our architecture uses layout-aware element extraction (Document -> Page -> Element).
+    Arbitrary text chunking parameters (chunk_size, chunking_method) are not used because
+    elements are structurally classified (Equipment, Pipe, Instrument, Note, Table).
 
     The extracted canonical representation will be saved to `data/canonical/{pid}.json`.
     """
     trace = RequestTrace()
     bind_request_id(trace.request_id)
 
+    # Derive PID from filename if not provided
+    clean_pid = pid.strip() if pid and pid.strip() else Path(file.filename).stem.replace(" ", "_").replace("&", "and")
+
     # Save uploaded file to temp samples directory
     samples_dir = settings.SAMPLES_DIR
     samples_dir.mkdir(parents=True, exist_ok=True)
-    temp_file_path = samples_dir / f"{pid}_{file.filename}"
+    temp_file_path = samples_dir / f"{clean_pid}_{file.filename}"
 
     with open(temp_file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -126,10 +135,10 @@ async def ingest_document(
         else:
             adapter = NativePDFAdapter()
 
-        with trace.span("ingest", pid=pid, adapter=adapter_type):
-            doc = adapter.ingest(temp_file_path, pid)
+        with trace.span("ingest", pid=clean_pid, adapter=adapter_type):
+            doc = adapter.ingest(temp_file_path, clean_pid)
 
-        # Save canonical JSON to data/canonical/{pid}.json
+        # Save canonical JSON to data/canonical/{clean_pid}.json
         canonical_path = save_canonical(doc)
         trace.finish()
         trace.save()
@@ -144,9 +153,10 @@ async def ingest_document(
         )
 
     except Exception as e:
+        logger.error("ingestion_endpoint_failed", pid=clean_pid, error=str(e))
         trace.finish(status="error", error=str(e))
         trace.save()
-        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {type(e).__name__} - {str(e)}")
 
 
 @app.post("/delta", response_model=DeltaResponse, tags=["Delta Engine"])
