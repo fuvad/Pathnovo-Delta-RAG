@@ -44,9 +44,9 @@ _PIPE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Valve tags: XV-100, HV-200, CV-301
+# Valve tags: XV-100, HV-200, CV-301, PSV-9027A, 26-FV-9038
 _VALVE_RE = re.compile(
-    r"^[A-Z]?V[-\s]?\d{2,5}[A-Z]?$",
+    r"^(?:\d{1,3}[-])?[A-Z]{1,3}V[-\s]?\d{2,5}[A-Z]?$",
     re.IGNORECASE,
 )
 
@@ -56,9 +56,9 @@ _TABLE_VALUE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Title heuristic: ALL CAPS text, at least 3 words, no numbers dominating
+# Title heuristic: ALL CAPS text with optional numbers/symbols
 _TITLE_RE = re.compile(
-    r"^[A-Z][A-Z\s&,\-/]{8,}$",
+    r"^[A-Z0-9][A-Z0-9\s&,\-/]{8,}$",
 )
 
 
@@ -91,8 +91,11 @@ def classify_text(text: str, font_size: float = 0.0, page_avg_font: float = 0.0)
     if _NOTE_RE.search(stripped):
         return ElementType.NOTE
 
-    # Equipment tags — check BEFORE pipe to avoid misclassification
-    # "26-KA-902" matches both equipment and pipe patterns
+    # Valve tags (XV-100, PSV-9027A, 26-FV-9038) — check BEFORE general equipment
+    if _VALVE_RE.match(first_line):
+        return ElementType.VALVE
+
+    # Equipment tags — "26-KA-902", "P-101A", "V-200"
     if _EQUIPMENT_RE.match(first_line):
         return ElementType.EQUIPMENT
 
