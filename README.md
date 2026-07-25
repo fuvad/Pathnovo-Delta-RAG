@@ -238,3 +238,17 @@ Every request is instrumented with end-to-end tracing and structured logging:
 1. **DWG Vector Parsing**: Direct binary parsing of AutoCAD DWG entities via `ezdxf` / Open Design Alliance SDKs.
 2. **Spatial Hierarchy Graphs**: Representing P&ID connectivity (pipe topology and component connections) as adjacency graphs for graph-based delta detection.
 3. **Interactive Visual Overlay**: PDF canvas rendering with color-coded bounding box highlights (Red = Removed, Green = Added, Yellow = Modified).
+
+---
+
+## Current Limitations
+
+This project was developed within a limited timeframe as part of an assignment. While the core functionality has been implemented, certain aspects such as retrieval accuracy, precision, and edge case handling have not yet been fully optimized.
+
+With additional development time, the following improvements are planned:
+- Improve retrieval accuracy and precision through further experimentation and tuning.
+- Optimize model and pipeline performance.
+- Handle additional edge cases and improve robustness.
+- Enhance testing, logging, and monitoring.
+- Prepare the system for production deployment.
+
