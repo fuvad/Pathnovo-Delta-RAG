@@ -47,21 +47,30 @@ def test_chat_context_building():
 
 
 def test_find_relevant_deltas():
-    """Test delta keyword and entity filtering for chat queries."""
+    """Test vector-based delta entry retrieval for chat queries."""
     chat = GroundedChat.__new__(GroundedChat)
     chat.pid_a = "doc_a"
     chat.pid_b = "doc_b"
+    chat.indexer = MagicMock()
 
-    d1 = DeltaEntry(change="modified", page=1, element_type="equipment", old_text="26-KA-902", new_text="26-KA-901")
-    d2 = DeltaEntry(change="unchanged", page=1, element_type="note", old_text="NOTE 1", new_text="NOTE 1")
+    chat.indexer.search.return_value = [
+        {
+            "change": "modified",
+            "page": 1,
+            "type": "equipment",
+            "old": "26-KA-902",
+            "new": "26-KA-901",
+            "reason": "Equipment changed",
+            "confidence": 0.96,
+        }
+    ]
 
-    chat.delta_entries = [d1, d2]
-
-    # Change question -> returns non-unchanged deltas
-    results = chat._find_relevant_deltas("What changed?")
+    results = chat._find_relevant_deltas("What changed in the equipment tag?", top_k=15)
     assert len(results) == 1
     assert results[0]["old"] == "26-KA-902"
-
-    # Specific entity question
-    results_tag = chat._find_relevant_deltas("What is 26-KA-902?")
-    assert len(results_tag) == 1
+    assert results[0]["new"] == "26-KA-901"
+    chat.indexer.search.assert_called_once_with(
+        query="What changed in the equipment tag?",
+        source="delta_report",
+        limit=15,
+    )

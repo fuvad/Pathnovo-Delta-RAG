@@ -162,50 +162,29 @@ Answer the question using ONLY the context above. Cite sources with [PID: <pid>,
 
         return "\n\n".join(parts)
 
-    def _find_relevant_deltas(self, question: str) -> list[dict]:
-        """Find delta entries relevant to the question using keyword matching.
+    def _find_relevant_deltas(self, question: str, top_k: int = 15) -> list[dict]:
+        """Find relevant delta entries using Qdrant vector retrieval.
 
-        Simple keyword approach — the delta report is typically small enough
-        that we can include all changes for change-related questions, or
-        filter by type/page keywords.
+        Leverages semantic similarity to rank delta report entries and caps results
+        at top_k to stay well within LLM context window / rate limits.
         """
-        q_lower = question.lower()
-
-        # If asking about changes broadly, return all non-unchanged entries
-        change_keywords = ["change", "differ", "modif", "add", "remov", "delet", "new", "delta"]
-        is_change_question = any(kw in q_lower for kw in change_keywords)
+        hits = self.indexer.search(
+            query=question,
+            source="delta_report",
+            limit=top_k,
+        )
 
         relevant: list[dict] = []
-
-        for d in self.delta_entries:
-            if d.change == "unchanged":
-                continue
-
-            entry_dict = d.to_dict()
-
-            # Include if it's a change question
-            if is_change_question:
-                relevant.append(entry_dict)
-                continue
-
-            # Include if question mentions the element type
-            if d.element_type in q_lower:
-                relevant.append(entry_dict)
-                continue
-
-            # Include if question mentions text content
-            if d.old_text and d.old_text.lower() in q_lower:
-                relevant.append(entry_dict)
-                continue
-            if d.new_text and d.new_text.lower() in q_lower:
-                relevant.append(entry_dict)
-                continue
-
-            # Include if question mentions the page
-            if f"page {d.page}" in q_lower:
-                relevant.append(entry_dict)
-                continue
-
+        for hit in hits:
+            relevant.append({
+                "change": hit.get("change", ""),
+                "page": hit.get("page", 1),
+                "type": hit.get("type", ""),
+                "old": hit.get("old", ""),
+                "new": hit.get("new", ""),
+                "reason": hit.get("reason", ""),
+                "confidence": hit.get("confidence", 0.0),
+            })
         return relevant
 
     # -------------------------------------------------------------------

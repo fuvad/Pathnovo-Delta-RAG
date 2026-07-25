@@ -1,0 +1,144 @@
+{
+  "timestamp": "2026-07-25T15:59:50.665607+00:00",
+  "request_id": "b913ef7e5d9f46d0",
+  "results": [
+    {
+      "pair_id": "pair_01_real",
+      "name": "Export Gas vs Lift Gas Compressor P&ID",
+      "elements_a": 259,
+      "elements_b": 329,
+      "predicted_changes": 284,
+      "delta_scores": {
+        "modifications": {
+          "true_positives": 48,
+          "false_positives": 104,
+          "false_negatives": 4,
+          "precision": 0.3158,
+          "recall": 0.9231,
+          "f1": 0.4706
+        },
+        "additions": {
+          "true_positives": 12,
+          "false_positives": 89,
+          "false_negatives": 2,
+          "precision": 0.1188,
+          "recall": 0.8571,
+          "f1": 0.2087
+        },
+        "removals": {
+          "true_positives": 1,
+          "false_positives": 30,
+          "false_negatives": 1,
+          "precision": 0.0323,
+          "recall": 0.5,
+          "f1": 0.0606
+        },
+        "overall": {
+          "true_positives": 61,
+          "false_positives": 223,
+          "false_negatives": 7,
+          "precision": 0.2148,
+          "recall": 0.8971,
+          "f1": 0.3466
+        }
+      },
+      "chat_scores": {
+        "accuracy": 0.2729,
+        "groundedness": 0.4667,
+        "citation_accuracy": 0.2889,
+        "per_question": [
+          {
+            "question": "What changed in the equipment tag?",
+            "accuracy": 0.0,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "What is the compressor duty?",
+            "accuracy": 0.0,
+            "groundedness": 1.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "Which instruments changed?",
+            "accuracy": 0.0,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "What is the discharge operating pressure?",
+            "accuracy": 0.75,
+            "groundedness": 1.0,
+            "citation_accuracy": 1.0
+          },
+          {
+            "question": "What changed in the compressor service description?",
+            "accuracy": 0.1,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "Which notes were modified?",
+            "accuracy": 0.1429,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "What is the flow rate?",
+            "accuracy": 0.7143,
+            "groundedness": 1.0,
+            "citation_accuracy": 1.0
+          },
+          {
+            "question": "Which valves changed?",
+            "accuracy": 0.0,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "What was added to the new revision?",
+            "accuracy": 0.0,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "What is the anti-surge control reference?",
+            "accuracy": 0.5,
+            "groundedness": 1.0,
+            "citation_accuracy": 0.3333
+          },
+          {
+            "question": "What changed in the alarm setpoints?",
+            "accuracy": 0.05,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "Who is the compressor vendor?",
+            "accuracy": 0.8,
+            "groundedness": 1.0,
+            "citation_accuracy": 1.0
+          },
+          {
+            "question": "What changed in the seal gas system?",
+            "accuracy": 0.0,
+            "groundedness": 0.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "What is the compressor type?",
+            "accuracy": 0.2857,
+            "groundedness": 1.0,
+            "citation_accuracy": 0.0
+          },
+          {
+            "question": "What is the design pressure downstream of the compressor?",
+            "accuracy": 0.75,
+            "groundedness": 1.0,
+            "citation_accuracy": 1.0
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -148,13 +148,15 @@ class QdrantIndexer:
         self,
         query: str,
         pid: str | None = None,
+        source: str | None = None,
         limit: int = 10,
     ) -> list[dict]:
-        """Search for similar elements by query text.
+        """Search for similar elements or delta entries by query text.
 
         Args:
             query: The search query.
             pid: Optional PID filter — search only within one document.
+            source: Optional source filter (e.g. "delta_report").
             limit: Max number of results.
 
         Returns:
@@ -162,17 +164,14 @@ class QdrantIndexer:
         """
         query_embedding = self.embedder.encode(query).tolist()  # Embeds query
 
-        # Optional PID filter
-        query_filter = None     # By default Search every document
-        if pid:     # if the user only want one pid
-            query_filter = Filter(
-                must=[
-                    FieldCondition(
-                        key="pid",
-                        match=MatchValue(value=pid),
-                    )
-                ]
-            )
+        # Optional filters
+        must_conditions = []
+        if pid:
+            must_conditions.append(FieldCondition(key="pid", match=MatchValue(value=pid)))
+        if source:
+            must_conditions.append(FieldCondition(key="source", match=MatchValue(value=source)))
+
+        query_filter = Filter(must=must_conditions) if must_conditions else None
 
         results = self.client.query_points(
             collection_name=self.collection_name,
@@ -191,6 +190,10 @@ class QdrantIndexer:
                 "type": hit.payload.get("type", ""),
                 "bbox": hit.payload.get("bbox", None),    # Location on page
                 "confidence": hit.payload.get("confidence", 0.0),    # OCR confidence
+                "change": hit.payload.get("change", ""),
+                "old": hit.payload.get("old_text", ""),
+                "new": hit.payload.get("new_text", ""),
+                "reason": hit.payload.get("reason", ""),
             }
             for hit in results.points
         ]
