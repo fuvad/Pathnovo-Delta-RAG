@@ -54,7 +54,7 @@ class MatchResult:
         self.spatial_score = spatial_score
         self.type_score = type_score
 
-    @property
+    @property    # behaves like a variable even though Python is executing a function
     def combined_score(self) -> float:
         return (
             W_SEMANTIC * self.semantic_score
@@ -75,9 +75,9 @@ class MatchResult:
             return "modified"
         return "unknown"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict:      #object -> python dict
         return {
-            "status": self.status,
+            "status": self.status,      #status property
             "semantic_score": round(self.semantic_score, 4),
             "spatial_score": round(self.spatial_score, 4),
             "type_score": round(self.type_score, 4),
@@ -112,7 +112,7 @@ class AlignmentEngine:
         logger.info("loading_embedding_model", model=settings.EMBEDDING_MODEL)
         self.embedder = SentenceTransformer(settings.EMBEDDING_MODEL)
 
-    def align(
+    def align(      # Main orchestration method
         self,
         doc_a: Document,
         doc_b: Document,
@@ -154,15 +154,15 @@ class AlignmentEngine:
                 for ea in elements_a
             ]
 
-        # --- Compute pairwise scores ---
-        score_matrix = self._compute_score_matrix(elements_a, elements_b)
+        # --- Compute pairwise scores (all matrices stored, no recomputation later) ---
+        score_matrices = self._compute_score_matrix(elements_a, elements_b)
 
         # --- Greedy matching: best match first, no double-claiming ---
-        matches = self._greedy_match(elements_a, elements_b, score_matrix)
+        matches = self._greedy_match(elements_a, elements_b, score_matrices)
 
         # Log summary
         status_counts = {}
-        for m in matches:
+        for m in matches:   # matches -> (unchanged, modified, added, deleted,...)
             status_counts[m.status] = status_counts.get(m.status, 0) + 1
 
         logger.info(
@@ -170,7 +170,7 @@ class AlignmentEngine:
             pid_a=doc_a.id,
             pid_b=doc_b.id,
             total_matches=len(matches),
-            **status_counts,
+            **status_counts,    # Unpack dict
         )
 
         return matches
@@ -183,24 +183,28 @@ class AlignmentEngine:
         self,
         elements_a: list[Element],
         elements_b: list[Element],
-    ) -> np.ndarray:
-        """Compute the combined score matrix between all element pairs.
+    ) -> dict[str, np.ndarray]:
+        """Compute all pairwise score matrices between element pairs.
 
         Returns:
-            A (len_a x len_b) matrix where entry [i][j] is the combined
-            match score between elements_a[i] and elements_b[j].
+            Dict with four (len_a x len_b) matrices:
+                "semantic"  — cosine similarity of text embeddings
+                "spatial"   — bounding box IoU
+                "type"      — 1.0 if same type, else 0.0
+                "combined"  — weighted sum of the above
         """
         # --- Semantic scores (batch embed + cosine similarity) ---
         texts_a = [el.text for el in elements_a]
         texts_b = [el.text for el in elements_b]
 
+        # Batch Embedding
         emb_a = self.embedder.encode(texts_a, show_progress_bar=False)
         emb_b = self.embedder.encode(texts_b, show_progress_bar=False)
 
         # Normalize for cosine similarity
         emb_a_norm = emb_a / (np.linalg.norm(emb_a, axis=1, keepdims=True) + 1e-9)
         emb_b_norm = emb_b / (np.linalg.norm(emb_b, axis=1, keepdims=True) + 1e-9)
-        semantic_matrix = emb_a_norm @ emb_b_norm.T     # cosine similarity matrix
+        semantic_matrix = emb_a_norm @ emb_b_norm.T     # cosine similarity matrix (@ -> matrix multi)
         semantic_matrix = np.clip(semantic_matrix, 0, 1)  # keep in 0–1
 
         len_a = len(elements_a)
@@ -227,7 +231,12 @@ class AlignmentEngine:
             + W_TYPE * type_matrix
         )
 
-        return combined
+        return {
+            "semantic": semantic_matrix,
+            "spatial": spatial_matrix,
+            "type": type_matrix,
+            "combined": combined,
+        }
 
     # -------------------------------------------------------------------
     # Greedy matching
@@ -237,18 +246,24 @@ class AlignmentEngine:
         self,
         elements_a: list[Element],
         elements_b: list[Element],
-        score_matrix: np.ndarray,
+        score_matrices: dict[str, np.ndarray],
     ) -> list[MatchResult]:
         """Greedy best-first matching — highest score pair first, no repeats.
 
         Steps:
-            1. Flatten the score matrix into (score, i, j) triples
+            1. Flatten the combined matrix into (score, i, j) triples
             2. Sort descending by score
             3. Greedily claim the best pair if neither i nor j is already claimed
-            4. Unclaimed A elements → deleted
-            5. Unclaimed B elements → added
+            4. Look up individual scores directly from stored matrices
+            5. Unclaimed A elements → deleted
+            6. Unclaimed B elements → added
         """
-        len_a, len_b = score_matrix.shape
+        combined = score_matrices["combined"]
+        semantic_matrix = score_matrices["semantic"]
+        spatial_matrix = score_matrices["spatial"]
+        type_matrix = score_matrices["type"]
+
+        len_a, len_b = combined.shape
         claimed_a: set[int] = set()
         claimed_b: set[int] = set()
         matches: list[MatchResult] = []
@@ -257,7 +272,7 @@ class AlignmentEngine:
         pairs = []
         for i in range(len_a):
             for j in range(len_b):
-                pairs.append((score_matrix[i][j], i, j))
+                pairs.append((combined[i][j], i, j))   # List of tuples of (combined score, row, col)
 
         pairs.sort(key=lambda x: x[0], reverse=True)   # highest score first
 
@@ -268,39 +283,24 @@ class AlignmentEngine:
             if i in claimed_a or j in claimed_b:
                 continue    # already matched
 
-            ea = elements_a[i]
-            eb = elements_b[j]
-
-            # Decompose the combined score back into components
-            semantic = 0.0
-            spatial = 0.0
-            type_s = 0.0
-
-            # Recompute individual scores for this pair
-            if ea.bbox and eb.bbox:
-                spatial = ea.bbox.iou(eb.bbox)
-            if ea.type == eb.type:
-                type_s = 1.0
-            # Semantic = (combined - spatial_contrib - type_contrib) / W_SEMANTIC
-            semantic = (score - W_SPATIAL * spatial - W_TYPE * type_s) / W_SEMANTIC if W_SEMANTIC > 0 else 0.0
-
+            # Direct lookup — no algebra, no recomputation
             match = MatchResult(
-                element_a=ea,
-                element_b=eb,
-                semantic_score=round(max(0, min(1, semantic)), 4),
-                spatial_score=round(spatial, 4),
-                type_score=type_s,
+                element_a=elements_a[i],
+                element_b=elements_b[j],
+                semantic_score=round(float(semantic_matrix[i][j]), 4),
+                spatial_score=round(float(spatial_matrix[i][j]), 4),
+                type_score=float(type_matrix[i][j]),
             )
             matches.append(match)
             claimed_a.add(i)
             claimed_b.add(j)
 
-        # Unclaimed A → deleted
+        # Unclaimed A → deleted  (Old element never found a match)
         for i in range(len_a):
             if i not in claimed_a:
                 matches.append(MatchResult(element_a=elements_a[i], element_b=None))
 
-        # Unclaimed B → added
+        # Unclaimed B → added  (New element never found a match)
         for j in range(len_b):
             if j not in claimed_b:
                 matches.append(MatchResult(element_a=None, element_b=elements_b[j]))
