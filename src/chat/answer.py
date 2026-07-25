@@ -25,11 +25,12 @@ SYSTEM_PROMPT = """You are a document analysis assistant. You answer questions a
 
 RULES — follow these strictly:
 1. Use ONLY the retrieved context below to answer. Do NOT use outside knowledge.
-2. Always cite your sources using this format: [PID: <pid>, Page: <page>, Type: <type>]
-3. For change-related questions, cite the delta report entry.
-4. If the context does not contain enough information to answer, say: "I couldn't find evidence for this in the provided documents."
-5. Be precise and factual. Prefer short, direct answers over long explanations.
-6. When listing changes, include the old and new values.
+2. Always cite your sources using this exact format: [PID: <pid>, Page: <page>, Type: <type>]
+3. Cite EACH individual entry specifically. Never combine citations into ranges or shorthands like [Δ1-Δ9].
+4. For delta report entries, use the exact PID provided in its citation header (e.g., export_gas_902_vs_lift_gas_901).
+5. If the context does not contain enough information to answer, say: "I couldn't find evidence for this in the provided documents."
+6. Be precise and factual. Prefer short, direct answers over long explanations.
+7. When listing changes, include the old and new values.
 """
 
 
@@ -129,6 +130,7 @@ Answer the question using ONLY the context above. Cite sources with [PID: <pid>,
     ) -> str:
         """Build the context string from retrieved chunks and delta entries."""
         parts: list[str] = []
+        delta_pid = f"{self.pid_a}_vs_{self.pid_b}" if self.pid_a and self.pid_b else "delta_report"
 
         # Document content from Qdrant
         if retrieved:
@@ -138,8 +140,7 @@ Answer the question using ONLY the context above. Cite sources with [PID: <pid>,
                 if hit.get("bbox"):
                     bbox_str = f", BBox: {hit['bbox']}"
                 parts.append(
-                    f"[{i}] PID: {hit['pid']}, Page: {hit['page']}, "
-                    f"Type: {hit['type']}{bbox_str}\n"
+                    f"[PID: {hit['pid']}, Page: {hit['page']}, Type: {hit['type']}{bbox_str}]\n"
                     f"    Text: {hit['text']}"
                 )
 
@@ -147,14 +148,18 @@ Answer the question using ONLY the context above. Cite sources with [PID: <pid>,
         if delta_context:
             parts.append("\n=== DELTA REPORT (Changes between revisions) ===")
             for i, entry in enumerate(delta_context, 1):
-                change_str = f"[Δ{i}] {entry['change']} — {entry['type']} on Page {entry['page']}"
+                change_str = (
+                    f"[PID: {delta_pid}, Page: {entry.get('page', 1)}, Type: {entry.get('type', 'text')}] "
+                    f"Change: {entry.get('change', 'Modified')}"
+                )
                 if entry.get("old"):
                     change_str += f"\n    Old: {entry['old']}"
                 if entry.get("new"):
                     change_str += f"\n    New: {entry['new']}"
                 if entry.get("reason"):
                     change_str += f"\n    Reason: {entry['reason']}"
-                change_str += f"\n    Confidence: {entry['confidence']}"
+                if entry.get("confidence"):
+                    change_str += f"\n    Confidence: {entry['confidence']}"
                 parts.append(change_str)
 
         if not parts:
